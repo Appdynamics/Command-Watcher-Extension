@@ -27,12 +27,12 @@ Important - displayName has to be unique for the command/script file
 commandToProcess:
 
   - displayName: "Java processes list"
-    command: "/Users/abhi.pandey/Documents/query1.sql"
-    isScript: true
+  command: "/Users/abhi.pandey/Documents/query1.sql"
+  isScript: true
 
   - displayName: "Java count script"
-    command: "/Users/abhi.pandey/Downloads/javaProcessesCount.sh"
-    isScript: true
+  command: "/Users/abhi.pandey/Downloads/javaProcessesCount.sh"
+  isScript: true
 
 Note - Make sure the metric prefix ends with a |
 metricPrefix: "Custom Metrics|Command Watcher|"
@@ -40,11 +40,11 @@ metricPrefix: "Custom Metrics|Command Watcher|"
 
 2. Configure the path to the config.yaml file by editing the <task-arguments> in the monitor.xml file. Below is the sample
 
-     <task-arguments>
-         <!-- config file-->
-             <argument name="config-file" is-required="true" default-value="monitors/ CommandWatcher /config.yml" />
-          ....
-     </task-arguments>
+<task-arguments>
+<!-- config file-->
+<argument name="config-file" is-required="true" default-value="monitors/ CommandWatcher /config.yml" />
+  ....
+</task-arguments>
 
 Contributing
 
