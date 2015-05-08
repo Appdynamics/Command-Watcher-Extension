@@ -34,7 +34,7 @@ commandToProcess:
     command: "/Users/abhi.pandey/Downloads/javaProcessesCount.sh"
     isScript: true
 
-# Make sure the metric prefix ends with a |
+Note - Make sure the metric prefix ends with a |
 metricPrefix: "Custom Metrics|Command Watcher|"
 
 
