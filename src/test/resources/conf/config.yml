@@ -1,0 +1,24 @@
+# List of commands
+commandToProcess:
+
+  - displayName: "file descriptor"
+    command: "lsof | wc -l"
+
+  - displayName: "Java processes count"
+    command: "ps -ef | grep java |wc -l"
+
+  - displayName: "wrong command"
+    command: "tell"
+
+  - displayName: "Java processes wc"
+    command: "ps -ef | grep java |wc"
+
+  - displayName: "Java processes list"
+    command: "ps -ef | grep java"
+
+
+# Make sure the metric prefix ends with a |
+metricPrefix: "Custom Metrics|CommandWatcher|"
+
+
+

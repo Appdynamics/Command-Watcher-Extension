@@ -1,0 +1,16 @@
+# List of commands
+commandToProcess:
+
+  - displayName: "Java processes list"
+    command: "/Users/abhi.pandey/Documents/query1.sql"
+    isScript: true
+
+  - displayName: "Java count script"
+    command: "/Users/abhi.pandey/Downloads/javaProcessesCount.sh"
+    isScript: true
+
+# Make sure the metric prefix ends with a |
+metricPrefix: "Custom Metrics|Command Watcher|"
+
+
+
