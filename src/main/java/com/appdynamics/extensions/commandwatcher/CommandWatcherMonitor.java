@@ -80,9 +80,8 @@ public class CommandWatcherMonitor extends AManagedMonitor {
                     } catch (NoSuchFileException e) {
                         logger.error("Wrong file path: " + e);
                     }
-                } else {
-                    executeCommand(command, displayName);
                 }
+                executeCommand(command, displayName);
             }
 
         } catch (Exception e) {
@@ -179,6 +178,12 @@ public class CommandWatcherMonitor extends AManagedMonitor {
         this.metricPrefix = metricPrefix;
     }
 
+    /**
+     * Checks if string passed is valid integer
+     *
+     * @param str
+     * @return true/false
+     */
     private boolean isInteger(String str) {
         if (str == null) {
             return false;
