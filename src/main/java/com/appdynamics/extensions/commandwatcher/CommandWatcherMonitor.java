@@ -4,31 +4,38 @@ import com.appdynamics.extensions.PathResolver;
 import com.appdynamics.extensions.commandwatcher.config.CommandToProcess;
 import com.appdynamics.extensions.commandwatcher.config.Configuration;
 import com.appdynamics.extensions.yml.YmlReader;
-import com.google.common.base.Strings;
 import com.singularity.ee.agent.systemagent.api.AManagedMonitor;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import com.singularity.ee.agent.systemagent.api.TaskExecutionContext;
 import com.singularity.ee.agent.systemagent.api.TaskOutput;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
-import org.apache.log4j.Logger;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Paths;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Created by abhi.pandey on 4/24/15.
+ * Refactored by atom!
  */
 public class CommandWatcherMonitor extends AManagedMonitor {
 
-    protected final Logger logger = Logger.getLogger(CommandWatcherMonitor.class.getName());
+    public static final Logger logger = LoggerFactory.getLogger(CommandWatcherMonitor.class);
     private String metricPrefix;
     private static final String CONFIG_ARG = "config-file";
-    private static final String LOG_PREFIX = "log-prefix";
-    private static String logPrefix;
     private static final String METRIC_SEPARATOR = "|";
+    private ProcessExecutor processExecutor;
+
+    public CommandWatcherMonitor() {
+        logger.info("Using Monitor Version [" + getImplementationVersion() + "]");
+        processExecutor = new ProcessExecutor();
+    }
 
     /**
      * This is the entry point to the monitor called by the Machine Agent
@@ -38,86 +45,90 @@ public class CommandWatcherMonitor extends AManagedMonitor {
      * @return
      * @throws com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException
      */
+
+
     public TaskOutput execute(Map<String, String> taskArguments, TaskExecutionContext taskContext) throws TaskExecutionException {
+        logger.debug("The task Arguments are {}", taskArguments);
         if (taskArguments != null && !taskArguments.isEmpty()) {
-            setLogPrefix(taskArguments.get(LOG_PREFIX));
-            logger.info("Using Monitor Version [" + getImplementationVersion() + "]");
-            logger.info(getLogPrefix() + "Starting the CommandWatcher Monitoring task.");
-            if (logger.isDebugEnabled()) {
-                logger.debug(getLogPrefix() + "Task Arguments Passed ::" + taskArguments);
-            }
-            String status = "Success";
-
-            String configFilename = getConfigFilename(taskArguments.get(CONFIG_ARG));
-
             try {
-                //read the config.
-                Configuration config = YmlReader.readFromFile(configFilename, Configuration.class);
-
-                // no point continuing if we don't have this
-                if (config.getCommandToProcess().isEmpty()) {
-                    return new TaskOutput("Failure");
+                String configPath = taskArguments.get(CONFIG_ARG);
+                File file = PathResolver.getFile(configPath, AManagedMonitor.class);
+                if (file != null && file.exists()) {
+                    //read the config.
+                    Configuration config = YmlReader.readFromFile(file, Configuration.class);
+                    // no point continuing if we don't have this
+                    if (!config.getCommandToProcess().isEmpty()) {
+                        processMetricPrefix(config.getMetricPrefix());
+                        executeCommands(config);
+                    } else {
+                        logger.warn("There are no commands configured in the config.yml");
+                    }
+                } else {
+                    logger.error("The config file path [{}] is resolved to [{}]", configPath, file != null ? file.getAbsolutePath() : null);
                 }
-                processMetricPrefix(config.getMetricPrefix());
-                status = getStatus(config, status);
-            } catch (Exception e) {
-                logger.error("Exception", e);
-            }
 
-            return new TaskOutput(status);
+            } catch (Exception e) {
+                logger.error("Error while running the CommandWatcherMonitor", e);
+            }
+        } else {
+            logger.error("Skipping CommandWatcherMonitor since the task arguments in monitor.xml is not set");
         }
-        throw new TaskExecutionException(getLogPrefix() + "CommandWatcher monitoring task completed with failures.");
+        return null;
     }
 
-    private String getStatus(Configuration config, String status) {
-        try {
-            for (CommandToProcess commandToProcess : config.getCommandToProcess()) {
+    private void executeCommands(Configuration config) {
+        List<CommandToProcess> commands = config.getCommandToProcess();
+        logger.debug("The commands are {}", commands);
+        for (CommandToProcess commandToProcess : commands) {
+            try {
                 String command = commandToProcess.getCommand();
                 String displayName = commandToProcess.getDisplayName();
-                if (commandToProcess.getIsScript()) {
-                    try {
-                        command = new String(Files.readAllBytes(Paths.get(command)));
-                    } catch (NoSuchFileException e) {
-                        logger.error("Wrong file path: " + e);
+                if (!StringUtils.isEmpty(command) && !StringUtils.isEmpty(displayName)) {
+                    ProcessExecutor.Response response;
+                    if (Boolean.TRUE.equals(commandToProcess.getIsScript())) {
+                        File file = PathResolver.getFile(command.trim(), AManagedMonitor.class);
+                        if (file != null && file.exists()) {
+                            response = processExecutor.execute(file);
+                        } else {
+                            String err = String.format("The file [%s] was resolved to [%s]", command, file != null ? file.getAbsolutePath() : null);
+                            response = new ProcessExecutor.Response(null,err);
+                        }
+                    } else {
+                        response = processExecutor.execute("bash", "-c", command);
                     }
+                    logger.debug("The response of the command [{}] is {}", command, response);
+                    if (response != null) {
+                        processResponse(command, displayName, response);
+                    }
+                } else {
+                    logger.error("The command and display name shouldn't be null {}", commandToProcess);
                 }
-                executeCommand(command, displayName);
+            } catch (Exception e) {
+                logger.error("Error while running the command " + commandToProcess, e);
             }
-
-        } catch (Exception e) {
-            logger.error("Error in processing the commands:" + e);
-            status = "Failure";
         }
-
-        return status;
     }
 
-    private String executeCommand(String command, String displayName) {
-        String output = LinuxInteractor.execute(command, true);
-        if (output.contains("command not found")) {
-            logger.error("Invalid bash command - " + command);
-        } else if (!isInteger(output)) {
-
-            logger.error("Command \"" + command + "\" doesn't generate recommended output");
-
-        } else {
-            StringBuffer metricPath = new StringBuffer();
-            metricPath.append(metricPrefix);
-            printCollectiveObservedCurrent(metricPath.toString() + displayName, output);
+    private void processResponse(String command, String displayName, ProcessExecutor.Response response) {
+        String out = response.getOut();
+        if (out != null) {
+            out = out.trim();
+            if (NumberUtils.isNumber(out.trim())) {
+                BigDecimal bigDecimal = new BigDecimal(out);
+                StringBuffer metricPath = new StringBuffer();
+                metricPath.append(metricPrefix);
+                String valueStr = bigDecimal.setScale(0, RoundingMode.HALF_UP).toString();
+                printCollectiveObservedAverage(metricPath.toString() + displayName, valueStr);
+            } else {
+                logger.error("The output of the command [{}] is not a number [{}]", out);
+            }
         }
-
-        return output;
+        if (!StringUtils.isEmpty(response.getError())) {
+            logger.error("There was an error while running the command [{}]. The output is [{}]. The error is [{}]",
+                    command, out, response.getError());
+        }
     }
 
-    /**
-     * A helper method to report the metrics.
-     *
-     * @param metricPath
-     * @param metricValue
-     * @param aggType
-     * @param timeRollupType
-     * @param clusterRollupType
-     */
     public void printMetric(String metricPath, String metricValue, String aggType, String timeRollupType, String clusterRollupType) {
         MetricWriter metricWriter = getMetricWriter(metricPath,
                 aggType,
@@ -126,7 +137,7 @@ public class CommandWatcherMonitor extends AManagedMonitor {
         );
 
         if (logger.isDebugEnabled()) {
-            logger.debug(getLogPrefix() + "Sending [" + aggType + METRIC_SEPARATOR + timeRollupType + METRIC_SEPARATOR + clusterRollupType
+            logger.debug("Sending [" + aggType + METRIC_SEPARATOR + timeRollupType + METRIC_SEPARATOR + clusterRollupType
                     + "] metric = " + metricPath + " = " + metricValue);
         }
 
@@ -134,36 +145,12 @@ public class CommandWatcherMonitor extends AManagedMonitor {
     }
 
 
-    private void printCollectiveObservedCurrent(String metricPath, String metricValue) {
+    private void printCollectiveObservedAverage(String metricPath, String metricValue) {
         printMetric(metricPath, metricValue,
                 MetricWriter.METRIC_AGGREGATION_TYPE_AVERAGE,
                 MetricWriter.METRIC_TIME_ROLLUP_TYPE_AVERAGE,
                 MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_INDIVIDUAL
         );
-    }
-
-    /**
-     * Returns a config file name,
-     *
-     * @param filename
-     * @return String
-     */
-
-    private String getConfigFilename(String filename) {
-        if (filename == null) {
-            return "";
-        }
-        //for absolute paths
-        if (new File(filename).exists()) {
-            return filename;
-        }
-        //for relative paths
-        File jarPath = PathResolver.resolveDirectory(AManagedMonitor.class);
-        String configFileName = "";
-        if (!Strings.isNullOrEmpty(filename)) {
-            configFileName = jarPath + File.separator + filename;
-        }
-        return configFileName;
     }
 
     private void processMetricPrefix(String metricPrefix) {
@@ -176,44 +163,6 @@ public class CommandWatcherMonitor extends AManagedMonitor {
         }
 
         this.metricPrefix = metricPrefix;
-    }
-
-    /**
-     * Checks if string passed is valid integer
-     *
-     * @param str
-     * @return true/false
-     */
-    private boolean isInteger(String str) {
-        if (str == null) {
-            return false;
-        }
-        int length = str.length();
-        if (length == 0) {
-            return false;
-        }
-        int i = 0;
-        if (str.charAt(0) == '-') {
-            if (length == 1) {
-                return false;
-            }
-            i = 1;
-        }
-        for (; i < length; i++) {
-            char c = str.charAt(i);
-            if (c <= '/' || c >= ':') {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public String getLogPrefix() {
-        return logPrefix;
-    }
-
-    public void setLogPrefix(String logPrefix) {
-        this.logPrefix = (logPrefix != null) ? logPrefix : "";
     }
 
     private static String getImplementationVersion() {

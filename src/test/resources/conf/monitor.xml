@@ -14,7 +14,6 @@
         <task-arguments>
             <!-- config file-->
             <argument name="config-file" is-required="true" default-value="monitors/CommandWatcher/config.yml" />
-            <argument name="log-prefix" is-required="false" default-value="[CommandWatcherAppDExt] " />
         </task-arguments>
         <java-task>
             <classpath>CommandWatcher.jar</classpath>

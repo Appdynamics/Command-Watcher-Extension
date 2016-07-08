@@ -1,12 +1,16 @@
 # List of commands
 commandToProcess:
 
-  - displayName: "Java processes list"
-    command: "/Users/abhi.pandey/Documents/query1.sql"
+  - displayName: "Home Dir File Count"
+    command: "ls -ltr ~| wc -l"
+    isScript: false
+
+  - displayName: "Java Processes List"
+    command: "/path/to/script1.sh"
     isScript: true
 
-  - displayName: "Java count script"
-    command: "/Users/abhi.pandey/Downloads/javaProcessesCount.sh"
+  - displayName: "Random Script"
+    command: "/path/to/script2.sh"
     isScript: true
 
 # Make sure the metric prefix ends with a |

@@ -1,8 +1,8 @@
 # List of commands
 commandToProcess:
 
-  - displayName: "file descriptor"
-    command: "lsof | wc -l"
+  - displayName: "File Count"
+    command: "ls -al ~ | wc -l"
 
   - displayName: "Java processes count"
     command: "ps -ef | grep java |wc -l"
@@ -10,11 +10,13 @@ commandToProcess:
   - displayName: "wrong command"
     command: "tell"
 
-  - displayName: "Java processes wc"
-    command: "ps -ef | grep java |wc"
-
   - displayName: "Java processes list"
-    command: "ps -ef | grep java"
+    command: "src/test/resources/scripts/filecount.sh"
+    isScript: true
+
+  - displayName: "File Not Found"
+    command: "src/test/resources/scripts/filecount1.sh"
+    isScript: true
 
 
 # Make sure the metric prefix ends with a |

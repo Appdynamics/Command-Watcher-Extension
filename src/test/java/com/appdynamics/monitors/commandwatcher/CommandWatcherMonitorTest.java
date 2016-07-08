@@ -16,21 +16,25 @@ public class CommandWatcherMonitorTest {
     private static final String CONFIG_ARG = "config-file";
 
     private CommandWatcherMonitor testClass;
+    private Map<String, String> taskArgs;
 
     @Before
     public void init() throws Exception {
         testClass = new CommandWatcherMonitor();
+        taskArgs = new HashMap();
     }
 
-
-    @Test(expected = TaskExecutionException.class)
-    public void testWithNullArgsShouldResultInException() throws Exception {
-        testClass.execute(null, null);
+    @Test
+    public void checkWithIncorrectConfigYmlPath() throws TaskExecutionException {
+        taskArgs.put(CONFIG_ARG, "src/main/resources/conf/config1.yml");
+        testClass.execute(taskArgs, null);
     }
 
-    @Test(expected = TaskExecutionException.class)
-    public void testWithEmptyArgsShouldResultInException() throws Exception {
-        testClass.execute(new HashMap<String, String>(), null);
+    @Test
+    public void validateActualConfigYml() throws TaskExecutionException {
+
+        taskArgs.put(CONFIG_ARG, "src/main/resources/conf/config.yml");
+        testClass.execute(taskArgs, null);
     }
 
     @Test
@@ -38,10 +42,7 @@ public class CommandWatcherMonitorTest {
 
         Map<String, String> taskArgs = new HashMap();
         taskArgs.put(CONFIG_ARG, "src/test/resources/conf/config.yml");
-        try {
-            testClass.execute(taskArgs, null);
-        } catch (TaskExecutionException e) {
-            e.printStackTrace();
-        }
+        testClass.execute(taskArgs, null);
+
     }
 }

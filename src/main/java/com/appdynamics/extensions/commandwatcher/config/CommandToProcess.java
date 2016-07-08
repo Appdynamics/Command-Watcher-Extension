@@ -31,4 +31,13 @@ public class CommandToProcess {
     public void setIsScript(Boolean isScript) {
         this.isScript = isScript;
     }
+
+    @Override
+    public String toString() {
+        return "CommandToProcess{" +
+                "displayName='" + displayName + '\'' +
+                ", command='" + command + '\'' +
+                ", isScript=" + isScript +
+                '}';
+    }
 }
