@@ -16,5 +16,8 @@ commandToProcess:
 # Make sure the metric prefix ends with a |
 metricPrefix: "Custom Metrics|Command Watcher|"
 
+#This will create it in specific Tier. Replace <TIER_ID>
+#metricPrefix: "Server|Component:<TIER_ID>|Custom Metrics|Command Watcher|"
+
 
 

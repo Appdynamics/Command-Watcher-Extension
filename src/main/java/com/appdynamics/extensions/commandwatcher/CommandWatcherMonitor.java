@@ -158,9 +158,6 @@ public class CommandWatcherMonitor extends AManagedMonitor {
         if (!metricPrefix.endsWith("|")) {
             metricPrefix = metricPrefix + "|";
         }
-        if (!metricPrefix.startsWith("Custom Metrics|")) {
-            metricPrefix = "Custom Metrics|" + metricPrefix;
-        }
 
         this.metricPrefix = metricPrefix;
     }
