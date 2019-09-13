@@ -95,13 +95,13 @@ public class CommandWatcherMonitor extends AManagedMonitor {
                     if (Boolean.TRUE.equals(commandToProcess.getIsScript())) {
                         File file = PathResolver.getFile(command.trim(), AManagedMonitor.class);
                         if (file != null && file.exists()) {
-                            response = processExecutor.execute(file);
+                            response = processExecutor.execute(commandToProcess.getTimeOut(), file);
                         } else {
                             String err = String.format("The file [%s] was resolved to [%s]", command, file != null ? file.getAbsolutePath() : null);
                             response = new ProcessExecutor.Response(null,err);
                         }
                     } else {
-                        response = processExecutor.execute("bash", "-c", command);
+                        response = processExecutor.execute(commandToProcess.getTimeOut(), "bash", "-c", command);
                     }
                     logger.debug("The response of the command [{}] is {}", command, response);
                     if (response != null) {

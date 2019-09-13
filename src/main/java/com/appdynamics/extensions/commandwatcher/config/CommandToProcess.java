@@ -14,6 +14,7 @@ public class CommandToProcess {
     private String displayName;
     private String command;
     private Boolean isScript;
+    private long timeOut;
 
     public String getDisplayName() {
         return displayName;
@@ -46,5 +47,13 @@ public class CommandToProcess {
                 ", command='" + command + '\'' +
                 ", isScript=" + isScript +
                 '}';
+    }
+
+    public long getTimeOut() {
+        return timeOut;
+    }
+
+    public void setTimeOut(long timeOut) {
+        this.timeOut = timeOut;
     }
 }

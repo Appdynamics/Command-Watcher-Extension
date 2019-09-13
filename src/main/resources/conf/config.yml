@@ -4,14 +4,17 @@ commandToProcess:
   - displayName: "Home Dir File Count"
     command: "ls -ltr ~| wc -l"
     isScript: false
+    timeOut: 10  # in seconds (default set to 10, change as needed)
 
   - displayName: "Java Processes List"
     command: "/path/to/script1.sh"
     isScript: true
+    timeOut: 10
 
   - displayName: "Random Script"
     command: "/path/to/script2.sh"
     isScript: true
+    timeOut: 10
 
 # Make sure the metric prefix ends with a |
 metricPrefix: "Custom Metrics|Command Watcher|"

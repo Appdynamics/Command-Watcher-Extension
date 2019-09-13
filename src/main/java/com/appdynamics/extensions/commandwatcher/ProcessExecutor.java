@@ -7,6 +7,7 @@
 
 package com.appdynamics.extensions.commandwatcher;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -37,12 +38,12 @@ public class ProcessExecutor {
     }
 
 
-    public Response execute(File file) {
+    public Response execute(long timeOut, File file) {
         if (file.exists()) {
             if (!file.canExecute()) {
                 makeExecutable(file);
             }
-            return execute(new String[]{file.getAbsolutePath()});
+            return execute(timeOut, new String[]{file.getAbsolutePath()});
         } else {
             String msg = String.format("The file [%s] doesn't exist", file.getAbsolutePath());
             logger.error(msg);
@@ -50,8 +51,8 @@ public class ProcessExecutor {
         }
     }
 
-    public Response execute(String... commands) {
-        Response response;
+    public Response execute(long timeOut, String... commands) {
+        Response response = null;
         try {
             if (logger.isDebugEnabled()) {
                 logger.debug("The command is  {}", Arrays.toString(commands));
@@ -61,15 +62,24 @@ public class ProcessExecutor {
             Process process = builder.start();
             Future<String> errorFuture = errReaderService.submit(new OutReader(process.getErrorStream()));
             Future<String> outFuture = outReaderService.submit(new OutReader(process.getInputStream()));
-            process.waitFor();
-            response = new Response(getSilent(outFuture, commands), getSilent(errorFuture, commands));
+            boolean isExecComplete = process.waitFor(timeOut, SECONDS);
+            if (!isExecComplete) {
+                outFuture.cancel(!isExecComplete);
+                errorFuture.cancel(!isExecComplete);
+                if (logger.isDebugEnabled())
+                    logger.debug("The command {} timed out while execution." + Arrays.toString(commands));
+            } else {
+                response = new Response(getSilent(outFuture, commands), getSilent(errorFuture, commands));
+                if (logger.isDebugEnabled())
+                    logger.debug("The response of the command {} is {}", Arrays.toString(commands), response);
+            }
+        } catch (InterruptedException Ie) {
+            logger.error("Interrupt exception while executing the command" + Arrays.toString(commands), Ie);
         } catch (Exception e) {
             logger.error("Error while executing the command " + Arrays.toString(commands), e);
             response = new Response(null, e.getMessage());
         }
-        if (logger.isDebugEnabled()) {
-            logger.debug("The response of the command is {}", response);
-        }
+
         return response;
     }
 
@@ -146,7 +156,7 @@ public class ProcessExecutor {
         }
     }
 
-    public void shutdown(){
+    public void shutdown() {
         errReaderService.shutdown();
         outReaderService.shutdown();
     }
