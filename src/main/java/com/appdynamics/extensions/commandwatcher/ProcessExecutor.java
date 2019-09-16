@@ -53,12 +53,14 @@ public class ProcessExecutor {
 
     public Response execute(long timeOut, String... commands) {
         Response response = null;
+        long startTime = 0;
         try {
             if (logger.isDebugEnabled()) {
                 logger.debug("The command is  {}", Arrays.toString(commands));
             }
             ProcessBuilder builder = new ProcessBuilder();
             builder.command(commands);
+            startTime = System.currentTimeMillis();
             Process process = builder.start();
             Future<String> errorFuture = errReaderService.submit(new OutReader(process.getErrorStream()));
             Future<String> outFuture = outReaderService.submit(new OutReader(process.getInputStream()));
@@ -79,7 +81,7 @@ public class ProcessExecutor {
             logger.error("Error while executing the command " + Arrays.toString(commands), e);
             response = new Response(null, e.getMessage());
         }
-
+        logger.debug("time taken to process the command {} is {} seconds", Arrays.toString(commands), System.currentTimeMillis() - startTime);
         return response;
     }
 

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,7 @@ public class CommandWatcherMonitor extends AManagedMonitor {
     private String metricPrefix;
     private static final String CONFIG_ARG = "config-file";
     private static final String METRIC_SEPARATOR = "|";
+    private static final long DEFAULT_TIMEOUT = 10;
     private ProcessExecutor processExecutor;
 
     public CommandWatcherMonitor() {
@@ -89,19 +91,21 @@ public class CommandWatcherMonitor extends AManagedMonitor {
         for (CommandToProcess commandToProcess : commands) {
             try {
                 String command = commandToProcess.getCommand();
+                //setting default timeout of 10 seconds
+                long timeOut = commandToProcess.getTimeOut() > 0 ? commandToProcess.getTimeOut() : DEFAULT_TIMEOUT;
                 String displayName = commandToProcess.getDisplayName();
                 if (!StringUtils.isEmpty(command) && !StringUtils.isEmpty(displayName)) {
                     ProcessExecutor.Response response;
                     if (Boolean.TRUE.equals(commandToProcess.getIsScript())) {
                         File file = PathResolver.getFile(command.trim(), AManagedMonitor.class);
                         if (file != null && file.exists()) {
-                            response = processExecutor.execute(commandToProcess.getTimeOut(), file);
+                            response = processExecutor.execute(timeOut, file);
                         } else {
                             String err = String.format("The file [%s] was resolved to [%s]", command, file != null ? file.getAbsolutePath() : null);
                             response = new ProcessExecutor.Response(null,err);
                         }
                     } else {
-                        response = processExecutor.execute(commandToProcess.getTimeOut(), "bash", "-c", command);
+                        response = processExecutor.execute(timeOut, "bash", "-c", command);
                     }
                     logger.debug("The response of the command [{}] is {}", command, response);
                     if (response != null) {
@@ -171,5 +175,15 @@ public class CommandWatcherMonitor extends AManagedMonitor {
 
     private static String getImplementationVersion() {
         return CommandWatcherMonitor.class.getPackage().getImplementationTitle();
+    }
+
+    public static void main(String[] args) throws TaskExecutionException {
+
+        Map<String, String> taskArgs = new HashMap<String, String>();
+        taskArgs.put(CONFIG_ARG, "src/main/resources/conf/config.yml");
+//        taskArgs.put(METRIC_ARG, "src/main/resources/conf/metrics.xml");
+
+        CommandWatcherMonitor muleesbMonitor = new CommandWatcherMonitor();
+        muleesbMonitor.execute(taskArgs, null);
     }
 }
