@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -177,13 +176,4 @@ public class CommandWatcherMonitor extends AManagedMonitor {
         return CommandWatcherMonitor.class.getPackage().getImplementationTitle();
     }
 
-    public static void main(String[] args) throws TaskExecutionException {
-
-        Map<String, String> taskArgs = new HashMap<String, String>();
-        taskArgs.put(CONFIG_ARG, "src/main/resources/conf/config.yml");
-//        taskArgs.put(METRIC_ARG, "src/main/resources/conf/metrics.xml");
-
-        CommandWatcherMonitor muleesbMonitor = new CommandWatcherMonitor();
-        muleesbMonitor.execute(taskArgs, null);
-    }
 }
