@@ -32,19 +32,6 @@ public class CommandWatcherMonitorTest {
     }
 
     @Test
-    public void checkWithIncorrectConfigYmlPath() throws TaskExecutionException {
-        taskArgs.put(CONFIG_ARG, "src/main/resources/conf/config1.yml");
-        testClass.execute(taskArgs, null);
-    }
-
-    @Test
-    public void validateActualConfigYml() throws TaskExecutionException {
-
-        taskArgs.put(CONFIG_ARG, "src/main/resources/conf/config.yml");
-        testClass.execute(taskArgs, null);
-    }
-
-    @Test
     public void testFileWatcherExtension() throws TaskExecutionException {
 
         Map<String, String> taskArgs = new HashMap();

@@ -1,175 +1,69 @@
-/*
- * Copyright 2018. AppDynamics LLC and its affiliates.
- * All Rights Reserved.
- * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
- * The copyright notice above does not evidence any actual or intended publication of such source code.
- */
-
 package com.appdynamics.extensions.commandwatcher;
 
-import com.appdynamics.extensions.PathResolver;
-import com.appdynamics.extensions.commandwatcher.config.CommandToProcess;
-import com.appdynamics.extensions.commandwatcher.config.Configuration;
-import com.appdynamics.extensions.yml.YmlReader;
-import com.singularity.ee.agent.systemagent.api.AManagedMonitor;
-import com.singularity.ee.agent.systemagent.api.MetricWriter;
-import com.singularity.ee.agent.systemagent.api.TaskExecutionContext;
-import com.singularity.ee.agent.systemagent.api.TaskOutput;
-import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
+import com.appdynamics.extensions.ABaseMonitor;
+import com.appdynamics.extensions.TasksExecutionServiceProvider;
+import com.appdynamics.extensions.conf.MonitorContextConfiguration;
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
+import com.appdynamics.extensions.util.AssertUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-/**
- * Created by abhi.pandey on 4/24/15.
- * Refactored by atom!
- */
-public class CommandWatcherMonitor extends AManagedMonitor {
+import static com.appdynamics.extensions.commandwatcher.utility.Constants.*;
 
-    public static final Logger logger = LoggerFactory.getLogger(CommandWatcherMonitor.class);
-    private String metricPrefix;
-    private static final String CONFIG_ARG = "config-file";
-    private static final String METRIC_SEPARATOR = "|";
-    private ProcessExecutor processExecutor;
+public class CommandWatcherMonitor extends ABaseMonitor {
+    private static final Logger logger = ExtensionsLoggerFactory.getLogger(CommandWatcherMonitor.class);
 
-    public CommandWatcherMonitor() {
-        logger.info("Using Monitor Version [" + getImplementationVersion() + "]");
-        processExecutor = new ProcessExecutor();
+    @Override
+    protected String getDefaultMetricPrefix() {
+        return DEFAULT_METRIC_PREFIX;
     }
 
-    /**
-     * This is the entry point to the monitor called by the Machine Agent
-     *
-     * @param taskArguments
-     * @param taskContext
-     * @return
-     * @throws com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException
-     */
+    @Override
+    public String getMonitorName() {
+        return MONITOR_NAME;
+    }
 
+    @Override
+    protected void doRun(TasksExecutionServiceProvider tasksExecutionServiceProvider) {
+        MonitorContextConfiguration contextConfiguration = getContextConfiguration();
+        List<Map<String, ?>> commandsToProcess = (List<Map<String, ?>>) contextConfiguration.getConfigYml().get(COMMAND_TO_PROCESS);
+        for (Map<String, ?> commandToProcess : commandsToProcess) {
+            String displayName = (String) commandToProcess.get(DISPLAY_NAME);
+            String command = (String) commandToProcess.get(COMMAND);
+            boolean isScript = (Boolean) commandToProcess.get(IS_SCRIPT);
+            AssertUtils.assertNotNull(displayName, "Display name cannot be empty.");
+            AssertUtils.assertNotNull(command, "command cannot be empty.");
+            AssertUtils.assertNotNull(isScript, "isScript cannot be empty.");
 
-    public TaskOutput execute(Map<String, String> taskArguments, TaskExecutionContext taskContext) throws TaskExecutionException {
-        logger.debug("The task Arguments are {}", taskArguments);
-        if (taskArguments != null && !taskArguments.isEmpty()) {
-            try {
-                String configPath = taskArguments.get(CONFIG_ARG);
-                File file = PathResolver.getFile(configPath, AManagedMonitor.class);
-                if (file != null && file.exists()) {
-                    //read the config.
-                    Configuration config = YmlReader.readFromFile(file, Configuration.class);
-                    // no point continuing if we don't have this
-                    if (!config.getCommandToProcess().isEmpty()) {
-                        processMetricPrefix(config.getMetricPrefix());
-                        executeCommands(config);
-                    } else {
-                        logger.warn("There are no commands configured in the config.yml");
-                    }
-                } else {
-                    logger.error("The config file path [{}] is resolved to [{}]", configPath, file != null ? file.getAbsolutePath() : null);
+            CommandWatcherMonitorTask commandWatcherMonitorTask = new CommandWatcherMonitorTask(tasksExecutionServiceProvider.getMetricWriteHelper(), contextConfiguration.getMetricPrefix(), displayName, command, isScript, commandToProcess);
+            Future handle = getContextConfiguration().getContext().getExecutorService().submit(displayName,commandWatcherMonitorTask);
+            try{
+                handle.get((Integer)contextConfiguration.getConfigYml().get(THREAD_TIMEOUT), TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.error("Task interrupted for {}",displayName, e);
+            } catch (ExecutionException e) {
+                logger.error("Task execution failed for {}",displayName, e);
+            } catch (TimeoutException e) {
+                logger.error("Task timed out for {}",displayName,e);
+            } finally {
+                if(!handle.isDone()){
+                    handle.cancel(true);
                 }
-
-            } catch (Exception e) {
-                logger.error("Error while running the CommandWatcherMonitor", e);
-            }
-        } else {
-            logger.error("Skipping CommandWatcherMonitor since the task arguments in monitor.xml is not set");
-        }
-        return null;
-    }
-
-    private void executeCommands(Configuration config) {
-        List<CommandToProcess> commands = config.getCommandToProcess();
-        logger.debug("The commands are {}", commands);
-        for (CommandToProcess commandToProcess : commands) {
-            try {
-                String command = commandToProcess.getCommand();
-                String displayName = commandToProcess.getDisplayName();
-                if (!StringUtils.isEmpty(command) && !StringUtils.isEmpty(displayName)) {
-                    ProcessExecutor.Response response;
-                    if (Boolean.TRUE.equals(commandToProcess.getIsScript())) {
-                        File file = PathResolver.getFile(command.trim(), AManagedMonitor.class);
-                        if (file != null && file.exists()) {
-                            response = processExecutor.execute(file);
-                        } else {
-                            String err = String.format("The file [%s] was resolved to [%s]", command, file != null ? file.getAbsolutePath() : null);
-                            response = new ProcessExecutor.Response(null,err);
-                        }
-                    } else {
-                        response = processExecutor.execute("bash", "-c", command);
-                    }
-                    logger.debug("The response of the command [{}] is {}", command, response);
-                    if (response != null) {
-                        processResponse(command, displayName, response);
-                    }
-                } else {
-                    logger.error("The command and display name shouldn't be null {}", commandToProcess);
-                }
-            } catch (Exception e) {
-                logger.error("Error while running the command " + commandToProcess, e);
             }
         }
+        logger.info("Finished processing of all commands!!!");
     }
 
-    private void processResponse(String command, String displayName, ProcessExecutor.Response response) {
-        String out = response.getOut();
-        if (out != null) {
-            out = out.trim();
-            if (NumberUtils.isNumber(out.trim())) {
-                BigDecimal bigDecimal = new BigDecimal(out);
-                StringBuffer metricPath = new StringBuffer();
-                metricPath.append(metricPrefix);
-                String valueStr = bigDecimal.setScale(0, RoundingMode.HALF_UP).toString();
-                printCollectiveObservedAverage(metricPath.toString() + displayName, valueStr);
-            } else {
-                logger.error("The output of the command [{}] is not a number [{}]", out);
-            }
-        }
-        if (!StringUtils.isEmpty(response.getError())) {
-            logger.error("There was an error while running the command [{}]. The output is [{}]. The error is [{}]",
-                    command, out, response.getError());
-        }
-    }
-
-    public void printMetric(String metricPath, String metricValue, String aggType, String timeRollupType, String clusterRollupType) {
-        MetricWriter metricWriter = getMetricWriter(metricPath,
-                aggType,
-                timeRollupType,
-                clusterRollupType
-        );
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Sending [" + aggType + METRIC_SEPARATOR + timeRollupType + METRIC_SEPARATOR + clusterRollupType
-                    + "] metric = " + metricPath + " = " + metricValue);
-        }
-
-        metricWriter.printMetric(metricValue);
-    }
-
-
-    private void printCollectiveObservedAverage(String metricPath, String metricValue) {
-        printMetric(metricPath, metricValue,
-                MetricWriter.METRIC_AGGREGATION_TYPE_AVERAGE,
-                MetricWriter.METRIC_TIME_ROLLUP_TYPE_AVERAGE,
-                MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_INDIVIDUAL
-        );
-    }
-
-    private void processMetricPrefix(String metricPrefix) {
-
-        if (!metricPrefix.endsWith("|")) {
-            metricPrefix = metricPrefix + "|";
-        }
-
-        this.metricPrefix = metricPrefix;
-    }
-
-    private static String getImplementationVersion() {
-        return CommandWatcherMonitor.class.getPackage().getImplementationTitle();
+    @Override
+    protected List<Map<String, ?>> getServers() {
+        List<Map<String, ?>> commandToProcess = (List<Map<String,?>>)getContextConfiguration().getConfigYml().get(COMMAND_TO_PROCESS);
+        AssertUtils.assertNotNull(commandToProcess,"The commandToProcess section is not configured in config.yml");
+        return commandToProcess;
     }
 }
