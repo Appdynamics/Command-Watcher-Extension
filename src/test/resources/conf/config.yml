@@ -1,14 +1,20 @@
+# For SIM enabled
+metricPrefix: "Custom Metrics|CommandWatcher|"
+
 # List of commands
 commandToProcess:
 
   - displayName: "File Count"
     command: "ls -al ~ | wc -l"
+    isScript: false
 
   - displayName: "Java processes count"
     command: "ps -ef | grep java |wc -l"
+    isScript: false
 
   - displayName: "wrong command"
     command: "tell"
+    isScript: false
 
   - displayName: "Java processes list"
     command: "src/test/resources/scripts/filecount.sh"
@@ -18,9 +24,8 @@ commandToProcess:
     command: "src/test/resources/scripts/filecount1.sh"
     isScript: true
 
+# number of concurrent tasks
+numberOfThreads: 5
 
-# Make sure the metric prefix ends with a |
-metricPrefix: "Custom Metrics|CommandWatcher|"
-
-
-
+#Timeout for each thread in seconds
+threadTimeout: 30

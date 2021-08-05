@@ -1,23 +1,50 @@
+#Metric prefix used when SIM is enabled for your machine agent
+#metricPrefix: "Custom Metrics|Command Watcher|"
+
+#This will publish metrics to specific tier
+#Instructions on how to retrieve the Component ID can be found in the Metric Prefix section of https://community.appdynamics.com/t5/Knowledge-Base/How-do-I-troubleshoot-missing-custom-metrics-or-extensions/ta-p/28695
+metricPrefix: "Server|Component:<COMPONENT OR TIER ID>|Custom Metrics|Command Watcher|"
+
 # List of commands
 commandToProcess:
 
   - displayName: "Home Dir File Count"
-    command: "ls -ltr ~| wc -l"
+    command: "ls -ltr ~ | wc -l"
     isScript: false
 
   - displayName: "Java Processes List"
-    command: "/path/to/script1.sh"
-    isScript: true
+    command: "ps aux | grep java | wc -l"
+    isScript: false
 
   - displayName: "Random Script"
-    command: "/path/to/script2.sh"
+    command: "/path/to/random_script.sh"
     isScript: true
 
-# Make sure the metric prefix ends with a |
-metricPrefix: "Custom Metrics|Command Watcher|"
+# number of concurrent tasks
+numberOfThreads: 5
 
-#This will create it in specific Tier. Replace <TIER_ID>
-#metricPrefix: "Server|Component:<TIER_ID>|Custom Metrics|Command Watcher|"
+#Timeout for each thread in seconds
+threadTimeout: 30
+
+# If any of the following fields are not set, the values of the specific fields are set from the system properties of the corresponding fields as specified in the comments.
+# If the system properties are not set for the field, then the data is retrieved from machine agent controller-info.xml. Please refer to ControllerInfoFactory for more details.
+controllerInfo:
+  controllerHost: "" # -Dappdynamics.controller.hostName
+  controllerPort: 8090 # -Dappdynamics.controller.port
+  controllerSslEnabled: false # -Dappdynamics.controller.ssl.enabled
+  enableOrchestration: false # N/A
+  uniqueHostId: "" # -Dappdynamics.agent.uniqueHostId
+  username: "" # -Dappdynamics.agent.monitors.controller.username
+  password: "" # -Dappdynamics.agent.monitors.controller.password
+  encryptedPassword: "" # -Dappdynamics.agent.monitors.controller.encryptedPassword
+  accountAccessKey: "" # -Dappdynamics.agent.accountAccessKey
+  account: "" # -Dappdynamics.agent.accountName
+  machinePath: "" # -Dappdynamics.machine.agent.hierarchyPath
+  simEnabled: false # -Dappdynamics.sim.enabled
+  applicationName: "" # -Dappdynamics.agent.applicationName
+  tierName: "" # -Dappdynamics.agent.tierName
+  nodeName: "" # -Dappdynamics.agent.nodeName
 
 
-
+#Encryption key for your controllerInfo password
+encryptionKey: "abcd"

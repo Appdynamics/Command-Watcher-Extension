@@ -7,7 +7,7 @@
 
 package com.appdynamics.monitors.commandwatcher;
 
-import com.appdynamics.extensions.commandwatcher.CommandWatcherMonitor;
+import com.appdynamics.extensions.commandwatcher.CommandWatcherMonitorNew;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,26 +22,13 @@ public class CommandWatcherMonitorTest {
 
     private static final String CONFIG_ARG = "config-file";
 
-    private CommandWatcherMonitor testClass;
+    private CommandWatcherMonitorNew testClass;
     private Map<String, String> taskArgs;
 
     @Before
     public void init() throws Exception {
-        testClass = new CommandWatcherMonitor();
+        testClass = new CommandWatcherMonitorNew();
         taskArgs = new HashMap();
-    }
-
-    @Test
-    public void checkWithIncorrectConfigYmlPath() throws TaskExecutionException {
-        taskArgs.put(CONFIG_ARG, "src/main/resources/conf/config1.yml");
-        testClass.execute(taskArgs, null);
-    }
-
-    @Test
-    public void validateActualConfigYml() throws TaskExecutionException {
-
-        taskArgs.put(CONFIG_ARG, "src/main/resources/conf/config.yml");
-        testClass.execute(taskArgs, null);
     }
 
     @Test

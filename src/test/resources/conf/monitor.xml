@@ -24,7 +24,7 @@
         </task-arguments>
         <java-task>
             <classpath>CommandWatcher.jar</classpath>
-            <impl-class>com.appdynamics.extensions.commandwatcher.CommandWatcherMonitor</impl-class>
+            <impl-class>com.appdynamics.extensions.commandwatcher.CommandWatcherMonitorNew</impl-class>
         </java-task>
     </monitor-run-task>
 </monitor>
