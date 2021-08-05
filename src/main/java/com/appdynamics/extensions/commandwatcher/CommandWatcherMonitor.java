@@ -16,8 +16,8 @@ import java.util.concurrent.TimeoutException;
 
 import static com.appdynamics.extensions.commandwatcher.utility.Constants.*;
 
-public class CommandWatcherMonitorNew extends ABaseMonitor {
-    private static final Logger logger = ExtensionsLoggerFactory.getLogger(CommandWatcherMonitorNew.class);
+public class CommandWatcherMonitor extends ABaseMonitor {
+    private static final Logger logger = ExtensionsLoggerFactory.getLogger(CommandWatcherMonitor.class);
 
     @Override
     protected String getDefaultMetricPrefix() {
@@ -41,8 +41,8 @@ public class CommandWatcherMonitorNew extends ABaseMonitor {
             AssertUtils.assertNotNull(command, "command cannot be empty.");
             AssertUtils.assertNotNull(isScript, "isScript cannot be empty.");
 
-            CommandWatcherMonitorTaskNew commandWatcherMonitorTaskNew = new CommandWatcherMonitorTaskNew(tasksExecutionServiceProvider.getMetricWriteHelper(), contextConfiguration.getMetricPrefix(), displayName, command, isScript, commandToProcess);
-            Future handle = getContextConfiguration().getContext().getExecutorService().submit(displayName,commandWatcherMonitorTaskNew);
+            CommandWatcherMonitorTask commandWatcherMonitorTask = new CommandWatcherMonitorTask(tasksExecutionServiceProvider.getMetricWriteHelper(), contextConfiguration.getMetricPrefix(), displayName, command, isScript, commandToProcess);
+            Future handle = getContextConfiguration().getContext().getExecutorService().submit(displayName,commandWatcherMonitorTask);
             try{
                 handle.get((Integer)contextConfiguration.getConfigYml().get(THREAD_TIMEOUT), TimeUnit.SECONDS);
             } catch (InterruptedException e) {
@@ -52,7 +52,7 @@ public class CommandWatcherMonitorNew extends ABaseMonitor {
             } catch (TimeoutException e) {
                 logger.error("Task timed out for {}",displayName,e);
             } finally {
-                if(!handle.isCancelled()){
+                if(!handle.isDone()){
                     handle.cancel(true);
                 }
             }

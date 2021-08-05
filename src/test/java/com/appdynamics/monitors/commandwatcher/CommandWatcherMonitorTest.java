@@ -7,7 +7,7 @@
 
 package com.appdynamics.monitors.commandwatcher;
 
-import com.appdynamics.extensions.commandwatcher.CommandWatcherMonitorNew;
+import com.appdynamics.extensions.commandwatcher.CommandWatcherMonitor;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,12 +22,12 @@ public class CommandWatcherMonitorTest {
 
     private static final String CONFIG_ARG = "config-file";
 
-    private CommandWatcherMonitorNew testClass;
+    private CommandWatcherMonitor testClass;
     private Map<String, String> taskArgs;
 
     @Before
     public void init() throws Exception {
-        testClass = new CommandWatcherMonitorNew();
+        testClass = new CommandWatcherMonitor();
         taskArgs = new HashMap();
     }
 

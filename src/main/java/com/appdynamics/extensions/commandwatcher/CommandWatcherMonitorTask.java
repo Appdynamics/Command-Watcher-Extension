@@ -15,9 +15,9 @@ import java.util.Map;
 
 import static com.appdynamics.extensions.commandwatcher.utility.Constants.*;
 
-public class CommandWatcherMonitorTaskNew implements AMonitorTaskRunnable {
+public class CommandWatcherMonitorTask implements AMonitorTaskRunnable {
 
-    private static final Logger logger = ExtensionsLoggerFactory.getLogger(CommandWatcherMonitorTaskNew.class);
+    private static final Logger logger = ExtensionsLoggerFactory.getLogger(CommandWatcherMonitorTask.class);
     private MetricWriteHelper metricWriteHelper;
     private String metricPrefix;
     private String displayName;
@@ -26,7 +26,7 @@ public class CommandWatcherMonitorTaskNew implements AMonitorTaskRunnable {
     private Map<String,?> commandToProcess;
     private ProcessExecutor processExecutor;
 
-    public CommandWatcherMonitorTaskNew(MetricWriteHelper metricWriteHelper, String metricPrefix, String displayName, String command, boolean isScript, Map<String, ?> commandToProcess) {
+    public CommandWatcherMonitorTask(MetricWriteHelper metricWriteHelper, String metricPrefix, String displayName, String command, boolean isScript, Map<String, ?> commandToProcess) {
         this.metricWriteHelper = metricWriteHelper;
         this.metricPrefix = metricPrefix;
         this.displayName = displayName;
