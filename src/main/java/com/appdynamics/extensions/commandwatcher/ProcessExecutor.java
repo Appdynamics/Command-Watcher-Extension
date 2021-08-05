@@ -7,10 +7,10 @@
 
 package com.appdynamics.extensions.commandwatcher;
 
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.InputStream;
@@ -25,7 +25,7 @@ import java.util.concurrent.Future;
  * NOT Threadsafe
  */
 public class ProcessExecutor {
-    public static final Logger logger = LoggerFactory.getLogger(ProcessExecutor.class);
+    public static final Logger logger = ExtensionsLoggerFactory.getLogger(ProcessExecutor.class);
 
     private ExecutorService outReaderService;
     private ExecutorService errReaderService;
