@@ -10,7 +10,7 @@ An AppDynamics extension that provide metrics from linux commands or script that
 Before the extension is installed, the prerequisites mentioned [here](https://community.appdynamics.com/t5/Knowledge-Base/Extensions-Prerequisites-Guide/ta-p/35213) need to be met. Please do not proceed with the extension installation if the specified prerequisites are not met
 
 ## Installation
-1. Run "mvn clean install"
+1. Run "mvn clean install" from "CommandWatcherRepo"
 1. Unzip the contents of CommandWatcher-\<version\>.zip file (&lt;CommandWatcherRepo&gt; / targets) and copy the directory to `<your-machine-agent-dir>/monitors`.
 2. Edit config.yml file and provide the required configuration (see Configuration section)
 3. Restart the Machine Agent.
@@ -69,7 +69,7 @@ threadTimeout: 30
 ```
 
 #### Yml Validation
-Please copy all the contents of the config.yml file and go to http://www.yamllint.com/ . On reaching the website, paste the contents and press the “Go” button on the bottom left.
+Please copy all the contents of the config.yml file and go [here](https://jsonformatter.org/yaml-validator) . On reaching the website, paste the contents and press the “Validate YAML” button.
 
 ### Metrics Provided
 We provide metric related to output of the linux command or the script file that generates single numeric output.
@@ -91,6 +91,7 @@ Always feel free to fork and contribute any changes directly via [GitHub](https:
 |          Name            |  Version   |
 |--------------------------|------------|
 |Extension Version         |2.0.0       |
-|Controller Compatibility  |4.5 or Later|
-|Machine Agent Version     |4.5.13+     |
 |Last Update               |05/08/2021  |
+|Change List               |[ChangeLog](https://github.com/Appdynamics/Command-Watcher-Extension/blob/master/CHANGELOG.md)|
+
+**Note**: While extensions are maintained and supported by customers under the open-source licensing model, they interact with agents and Controllers that are subject to [AppDynamics’ maintenance and support policy](https://docs.appdynamics.com/latest/en/product-and-release-announcements/maintenance-support-for-software-versions). Some extensions have been tested with AppDynamics 4.5.13+ artifacts, but you are strongly recommended against using versions that are no longer supported.
