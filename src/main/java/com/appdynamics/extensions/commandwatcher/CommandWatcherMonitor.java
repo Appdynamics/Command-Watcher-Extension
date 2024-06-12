@@ -31,7 +31,8 @@ public class CommandWatcherMonitor extends ABaseMonitor {
 
     @Override
     protected void doRun(TasksExecutionServiceProvider tasksExecutionServiceProvider) {
-        MonitorContextConfiguration contextConfiguration = getContextConfiguration();
+//testing        
+MonitorContextConfiguration contextConfiguration = getContextConfiguration();
         List<Map<String, ?>> commandsToProcess = (List<Map<String, ?>>) contextConfiguration.getConfigYml().get(COMMAND_TO_PROCESS);
         for (Map<String, ?> commandToProcess : commandsToProcess) {
             String displayName = (String) commandToProcess.get(DISPLAY_NAME);
