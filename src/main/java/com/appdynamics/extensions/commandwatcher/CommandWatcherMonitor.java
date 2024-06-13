@@ -35,13 +35,14 @@ public class CommandWatcherMonitor extends ABaseMonitor {
         List<Map<String, ?>> commandsToProcess = (List<Map<String, ?>>) contextConfiguration.getConfigYml().get(COMMAND_TO_PROCESS);
         for (Map<String, ?> commandToProcess : commandsToProcess) {
             String displayName = (String) commandToProcess.get(DISPLAY_NAME);
+            String metricName = (String) commandToProcess.get(METRIC_NAME);
             String command = (String) commandToProcess.get(COMMAND);
             boolean isScript = (Boolean) commandToProcess.get(IS_SCRIPT);
             AssertUtils.assertNotNull(displayName, "Display name cannot be empty.");
             AssertUtils.assertNotNull(command, "command cannot be empty.");
             AssertUtils.assertNotNull(isScript, "isScript cannot be empty.");
 
-            CommandWatcherMonitorTask commandWatcherMonitorTask = new CommandWatcherMonitorTask(tasksExecutionServiceProvider.getMetricWriteHelper(), contextConfiguration.getMetricPrefix(), displayName, command, isScript, commandToProcess);
+            CommandWatcherMonitorTask commandWatcherMonitorTask = new CommandWatcherMonitorTask(tasksExecutionServiceProvider.getMetricWriteHelper(), contextConfiguration.getMetricPrefix(), displayName, metricName, command, isScript, commandToProcess);
             Future handle = getContextConfiguration().getContext().getExecutorService().submit(displayName,commandWatcherMonitorTask);
             try{
                 handle.get((Integer)contextConfiguration.getConfigYml().get(THREAD_TIMEOUT), TimeUnit.SECONDS);

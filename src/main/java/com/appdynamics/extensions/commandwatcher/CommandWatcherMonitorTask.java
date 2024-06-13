@@ -21,15 +21,17 @@ public class CommandWatcherMonitorTask implements AMonitorTaskRunnable {
     private MetricWriteHelper metricWriteHelper;
     private String metricPrefix;
     private String displayName;
+    private String metricName;
     private String command;
     private boolean isScript;
     private Map<String,?> commandToProcess;
     private ProcessExecutor processExecutor;
 
-    public CommandWatcherMonitorTask(MetricWriteHelper metricWriteHelper, String metricPrefix, String displayName, String command, boolean isScript, Map<String, ?> commandToProcess) {
+    public CommandWatcherMonitorTask(MetricWriteHelper metricWriteHelper, String metricPrefix, String displayName, String metricName, String command, boolean isScript, Map<String, ?> commandToProcess) {
         this.metricWriteHelper = metricWriteHelper;
         this.metricPrefix = metricPrefix;
         this.displayName = displayName;
+        this.metricName = metricName;
         this.command = command;
         this.isScript = isScript;
         this.commandToProcess = commandToProcess;
@@ -65,7 +67,7 @@ public class CommandWatcherMonitorTask implements AMonitorTaskRunnable {
         String error = response.getError();
 
         if(!Strings.isNullOrEmpty(output) && NumberUtils.isNumber(output.trim())){
-            metricWriteHelper.printMetric(metricPrefix+SEPARATOR+displayName,output.trim(), MetricWriter.METRIC_AGGREGATION_TYPE_AVERAGE,
+            metricWriteHelper.printMetric(metricPrefix+SEPARATOR+displayName+(metricName!=null?SEPARATOR+metricName:""),output.trim(), MetricWriter.METRIC_AGGREGATION_TYPE_AVERAGE,
                     MetricWriter.METRIC_TIME_ROLLUP_TYPE_AVERAGE,MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_INDIVIDUAL);
         } else{
             logger.error("Output of command [{}] is either null or it is not a number.",command);
